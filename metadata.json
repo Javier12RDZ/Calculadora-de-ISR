@@ -1,0 +1,5 @@
+{
+  "name": "NominaMX - Calculadora Fiscal",
+  "description": "Calculadora de impuestos (ISR) y nómina para México con desglose de deducciones y análisis con IA.",
+  "requestFramePermissions": []
+}
