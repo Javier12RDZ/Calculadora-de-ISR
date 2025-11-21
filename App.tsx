@@ -551,7 +551,7 @@ const App: React.FC = () => {
               <ins className="adsbygoogle"
                    style={{ display: 'block' }}
                    data-ad-client="ca-pub-8650238416383621"
-                   data-ad-slot="YOUR_ADSENSE_AD_SLOT_ID"></ins>
+                   data-ad-slot="4125717924"></ins>
               <script>
                 (window.adsbygoogle = window.adsbygoogle || []).push({});
               </script>
