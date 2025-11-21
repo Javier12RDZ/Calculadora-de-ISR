@@ -545,6 +545,17 @@ const App: React.FC = () => {
                  </div>
               </div>
             )}
+            
+            {/* Ad Unit */}
+            <div className="flex justify-center my-8">
+              <ins className="adsbygoogle"
+                   style={{ display: 'block' }}
+                   data-ad-client="ca-pub-8650238416383621"
+                   data-ad-slot="YOUR_ADSENSE_AD_SLOT_ID"></ins>
+              <script>
+                (window.adsbygoogle = window.adsbygoogle || []).push({});
+              </script>
+            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
