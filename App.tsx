@@ -95,6 +95,15 @@ const App: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div className="text-center mb-8">
+            <h1 className="text-4xl font-extrabold text-slate-800 mb-2">Calculadora de Sueldo Neto México 2024</h1>
+            <p className="text-lg text-slate-600 max-w-3xl mx-auto">
+              Estima tu salario neto mensual, quincenal o semanal después de impuestos (ISR) y deducciones de ley (IMSS). 
+              Nuestra herramienta te ayuda a entender tu nómina y planificar tus finanzas personales.
+            </p>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Left Column: Inputs */}
@@ -587,6 +596,31 @@ const App: React.FC = () => {
 
           </div>
         </div>
+        <div className="mt-12 bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+            <h2 className="text-2xl font-bold text-slate-800 mb-4">Sobre esta herramienta</h2>
+            <div className="prose prose-slate max-w-none">
+              <p>
+                La Calculadora de Sueldo Neto (NominaMX) es una herramienta diseñada para proporcionar a los trabajadores en México una estimación clara y precisa de su salario neto. 
+                Sabemos que entender una nómina puede ser complicado debido a los diversos impuestos y deducciones. Nuestro objetivo es simplificar este proceso.
+              </p>
+              <h3 className="font-semibold text-slate-700">¿Cómo funciona?</h3>
+              <p>
+                Utilizamos las tablas de Impuesto Sobre la Renta (ISR) y las cuotas del Instituto Mexicano del Seguro Social (IMSS) vigentes para el año 2024. 
+                Al ingresar tu salario bruto y la frecuencia con la que recibes tu pago, la calculadora desglosa las deducciones y te muestra el monto final que deberías recibir.
+              </p>
+              <ul>
+                <li><strong>ISR:</strong> Es el impuesto que se aplica directamente a tus ingresos.</li>
+                <li><strong>IMSS:</strong> Son las aportaciones para tu seguridad social, que cubren enfermedad, maternidad, invalidez, retiro, etc.</li>
+              </ul>
+              <h3 className="font-semibold text-slate-700">Aviso Legal</h3>
+              <p>
+                Esta calculadora es una herramienta de simulación y debe ser utilizada únicamente con fines informativos y de referencia. 
+                Los resultados son una estimación y pueden no reflejar con total exactitud los cálculos de tu empleador, ya que pueden existir otras variables o deducciones no contempladas (como préstamos, cuotas sindicales, etc.). 
+                No nos hacemos responsables de las decisiones tomadas con base en la información aquí presentada. Para cálculos precisos y oficiales, consulta siempre a tu departamento de Recursos Humanos o a un contador profesional.
+              </p>
+            </div>
+          </div>
+
       </main>
     </div>
   );
