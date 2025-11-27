@@ -36,6 +36,16 @@ const App: React.FC = () => {
     }
   }, [dailySalary]);
 
+  // Initialize AdSense
+  useEffect(() => {
+    try {
+      const adsbygoogle = (window as any).adsbygoogle || [];
+      adsbygoogle.push({});
+    } catch (e) {
+      console.error('AdSense error:', e);
+    }
+  }, []);
+
   // Calculated Result
   const result: CalculationResult = useMemo(() => {
     return calculateTaxes({
@@ -560,10 +570,9 @@ const App: React.FC = () => {
               <ins className="adsbygoogle"
                    style={{ display: 'block' }}
                    data-ad-client="ca-pub-8650238416383621"
-                   data-ad-slot="4125717924"></ins>
-              <script>
-                (window.adsbygoogle = window.adsbygoogle || []).push({});
-              </script>
+                   data-ad-slot="4125717924"
+                   data-ad-format="auto"
+                   data-full-width-responsive="true"></ins>
             </div>
 
             {/* Stats */}

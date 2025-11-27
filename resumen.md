@@ -31,3 +31,13 @@ Hoy se trabajó en la integración de Google AdSense en la calculadora fiscal pa
     -   Hacer `git push` para actualizar el sitio en vivo con la unidad de anuncio configurada.
 
 Con estos pasos, el código está listo para que el sitio muestre anuncios de AdSense una vez que Google complete la revisión y aprobación final del mismo.
+
+# Resumen de Cambios - 26 de Noviembre de 2025
+
+## Corrección Técnica en AdSense
+
+-   **Problema:** La implementación anterior usaba una etiqueta `<script>` dentro del JSX (`App.tsx`), la cual React no ejecuta, dejando el espacio publicitario vacío e invisible para Google.
+-   **Solución:**
+    -   Se eliminó la etiqueta `<script>` inline.
+    -   Se implementó un `useEffect` para invocar `(window.adsbygoogle || []).push({})` después de que el componente se monta.
+    -   Se añadieron atributos `data-ad-format="auto"` y `data-full-width-responsive="true"` a la etiqueta `<ins>` para mejorar la visualización.
