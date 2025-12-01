@@ -41,3 +41,25 @@ Con estos pasos, el código está listo para que el sitio muestre anuncios de Ad
     -   Se eliminó la etiqueta `<script>` inline.
     -   Se implementó un `useEffect` para invocar `(window.adsbygoogle || []).push({})` después de que el componente se monta.
     -   Se añadieron atributos `data-ad-format="auto"` y `data-full-width-responsive="true"` a la etiqueta `<ins>` para mejorar la visualización.
+
+# Resumen de Cambios - 30 de Noviembre de 2025
+
+Hoy se abordaron y resolvieron varias advertencias y errores reportados en la consola del navegador.
+
+## 1. Resolución de Errores y Advertencias en Consola
+
+-   **ERR_BLOCKED_BY_CLIENT (AdSense y Analytics):**
+    -   Se explicó que estas advertencias no son errores de código, sino que son causadas por bloqueadores de anuncios o configuraciones de privacidad del navegador del usuario.
+    -   Se recomendó probar en modo incógnito para verificar su funcionamiento en un entorno sin bloqueadores.
+-   **Advertencia de Tailwind CSS CDN en Producción:**
+    -   Se informó que esta advertencia aparece porque Tailwind CSS se está cargando a través de un CDN, lo cual es subóptimo para entornos de producción.
+    -   Se indicó que, aunque no es un error crítico, para optimizar el rendimiento, se debería instalar Tailwind CSS como una dependencia del proyecto.
+-   **404 (Not Found) para /index.css:**
+    -   Se identificó que el archivo `index.css` no existía y estaba siendo referenciado en `index.html`.
+    -   **Acción:** Se eliminó la línea `<link rel="stylesheet" href="/index.css">` de `index.html` para resolver este error 404.
+
+## 2. Actualización del Repositorio de GitHub
+
+-   **Acción:** Se añadieron (`git add`) los cambios realizados en `index.html`.
+-   **Acción:** Se realizó un commit con el mensaje "Fix 404 error by removing reference to missing index.css".
+-   **Acción:** Se subieron (`git push`) los cambios a la rama `master` del repositorio remoto.
