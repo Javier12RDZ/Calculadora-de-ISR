@@ -1,9 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Calculator, DollarSign, HelpCircle, Info, MinusCircle, Clock, Wallet, Gift, ArrowRight, Sun, Percent, Calendar, Sunrise } from 'lucide-react';
 import { CurrencyInput } from './components/CurrencyInput';
 import { DonutChart } from './components/DonutChart';
 import { calculateTaxes, calculateAguinaldo, calculatePrimaVacacional } from './services/calculatorService';
 import { CalculationResult, Periodicity, AguinaldoResult, PrimaVacacionalResult } from './types';
+import { EducationalContent } from './components/EducationalContent';
+import { FaqSection } from './components/FaqSection';
+import { Footer } from './components/Footer';
+import { PrivacyPolicy } from './components/PrivacyPolicy';
 
 const App: React.FC = () => {
   // State for inputs
@@ -28,6 +32,9 @@ const App: React.FC = () => {
   const [savingsBoxAmount, setSavingsBoxAmount] = useState<number>(0);
   const [otherDeductions, setOtherDeductions] = useState<number>(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const privacyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (dailySalary > 0) {
@@ -45,6 +52,12 @@ const App: React.FC = () => {
       console.error('AdSense error:', e);
     }
   }, []);
+
+  useEffect(() => {
+    if (showPrivacy && privacyRef.current) {
+      privacyRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [showPrivacy]);
 
   // Calculated Result
   const result: CalculationResult = useMemo(() => {
@@ -88,7 +101,7 @@ const App: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-12">
+    <div className="min-h-screen bg-slate-50 pb-0 flex flex-col">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -104,7 +117,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
         
         <div className="text-center mb-8">
             <h1 className="text-4xl font-extrabold text-slate-800 mb-2">Calculadora de Sueldo Neto México 2024</h1>
@@ -605,6 +618,8 @@ const App: React.FC = () => {
 
           </div>
         </div>
+        
+        {/* Educational Content and FAQ - New Section */}
         <div className="mt-12 bg-white rounded-xl shadow-sm border border-slate-200 p-8">
             <h2 className="text-2xl font-bold text-slate-800 mb-4">Sobre esta herramienta</h2>
             <div className="prose prose-slate max-w-none">
@@ -628,11 +643,25 @@ const App: React.FC = () => {
                 No nos hacemos responsables de las decisiones tomadas con base en la información aquí presentada. Para cálculos precisos y oficiales, consulta siempre a tu departamento de Recursos Humanos o a un contador profesional.
               </p>
             </div>
+        </div>
+        
+        <EducationalContent />
+        
+        <FaqSection />
+        
+        {showPrivacy && (
+          <div ref={privacyRef}>
+            <PrivacyPolicy />
           </div>
+        )}
 
       </main>
+      
+      <Footer onShowPrivacy={() => setShowPrivacy(!showPrivacy)} />
     </div>
   );
 };
+
+export default App;
 
 export default App;
