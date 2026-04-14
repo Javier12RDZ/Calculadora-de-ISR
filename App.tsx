@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Calculator, DollarSign, HelpCircle, Info, MinusCircle, Clock, Wallet, Gift, ArrowRight, Sun, Percent, Calendar, Sunrise } from 'lucide-react';
+import { Calculator, DollarSign, HelpCircle, Info, MinusCircle, Clock, Wallet, Gift, ArrowRight, Sun, Percent, Calendar, Sunrise, Plus, Trash2, Scale } from 'lucide-react';
 import { CurrencyInput } from './components/CurrencyInput';
 import { DonutChart } from './components/DonutChart';
-import { calculateTaxes, calculateAguinaldo, calculatePrimaVacacional } from './services/calculatorService';
-import { CalculationResult, Periodicity, AguinaldoResult, PrimaVacacionalResult } from './types';
+import { calculateTaxes, calculateAguinaldo, calculatePrimaVacacional, getPeriodFactor, getDaysInPeriod } from './services/calculatorService';
+import { CalculationResult, Periodicity, AguinaldoResult, PrimaVacacionalResult, Deduction, ComparisonData } from './types';
 import { EducationalContent } from './components/EducationalContent';
 import { FaqSection } from './components/FaqSection';
 import { Footer } from './components/Footer';
@@ -29,8 +29,10 @@ const App: React.FC = () => {
 
   const [imssOverride, setImssOverride] = useState<number | undefined>(undefined);
   const [savingsFundPercent, setSavingsFundPercent] = useState<number>(0);
+  const [employerSavingsFundMatch, setEmployerSavingsFundMatch] = useState<boolean>(false);
   const [savingsBoxAmount, setSavingsBoxAmount] = useState<number>(0);
-  const [otherDeductions, setOtherDeductions] = useState<number>(0);
+  const [otherDeductionsList, setOtherDeductionsList] = useState<Deduction[]>([]);
+  const [comparisons, setComparisons] = useState<ComparisonData[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -66,17 +68,73 @@ const App: React.FC = () => {
       periodicity,
       imssOverride: imssOverride === 0 && grossSalary === 0 ? undefined : imssOverride, 
       savingsFundPercent,
+      employerSavingsFundMatch,
       savingsBoxAmount,
-      otherDeductions,
+      otherDeductionsList,
       overtimeHours,
       holidaysWorked,
       sundaysWorked,
+      aguinaldoDays,
+      vacationDays,
+      vacationPremiumPercent,
     });
-  }, [grossSalary, periodicity, imssOverride, savingsFundPercent, savingsBoxAmount, otherDeductions, overtimeHours, holidaysWorked, sundaysWorked]);
+  }, [grossSalary, periodicity, imssOverride, savingsFundPercent, employerSavingsFundMatch, savingsBoxAmount, otherDeductionsList, overtimeHours, holidaysWorked, sundaysWorked, aguinaldoDays, vacationDays, vacationPremiumPercent]);
 
   // Handlers
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
+
+  const addDeduction = () => {
+    const newDeduction: Deduction = {
+      id: Math.random().toString(36).substr(2, 9),
+      label: 'Seguro, préstamo, etc.',
+      amount: 0
+    };
+    setOtherDeductionsList([...otherDeductionsList, newDeduction]);
+  };
+
+  const updateDeduction = (id: string, label: string, amount: number) => {
+    setOtherDeductionsList(otherDeductionsList.map(d => d.id === id ? { ...d, label, amount } : d));
+  };
+
+  const removeDeduction = (id: string) => {
+    setOtherDeductionsList(otherDeductionsList.filter(d => d.id !== id));
+  };
+
+  const addToComparison = () => {
+    const label = prompt('Nombre para esta oferta (ej. Oferta A, Empresa X):');
+    if (label) {
+      const currentDailySalary = dailySalary > 0 ? dailySalary : (grossSalary > 0 ? grossSalary / getDaysInPeriod(periodicity) : 0);
+      const calcAguinaldo = calculateAguinaldo(currentDailySalary, aguinaldoDays);
+      const calcPrimaVacacional = calculatePrimaVacacional(currentDailySalary, vacationDays, vacationPremiumPercent);
+
+      setComparisons([...comparisons, {
+        label,
+        inputs: {
+          grossSalary,
+          periodicity,
+          imssOverride,
+          savingsFundPercent,
+          employerSavingsFundMatch,
+          savingsBoxAmount,
+          otherDeductionsList: [...otherDeductionsList],
+          overtimeHours,
+          holidaysWorked,
+          sundaysWorked,
+          aguinaldoDays,
+          vacationDays,
+          vacationPremiumPercent,
+        },
+        result: { ...result },
+        aguinaldo: calcAguinaldo,
+        primaVacacional: calcPrimaVacacional
+      }]);
+    }
+  };
+
+  const removeComparison = (index: number) => {
+    setComparisons(comparisons.filter((_, i) => i !== index));
+  };
 
   const handleCalculateAguinaldo = () => {
     const currentDailySalary = dailySalary > 0 ? dailySalary : (grossSalary > 0 ? grossSalary / getDaysInPeriod(periodicity) : 0);
@@ -90,16 +148,6 @@ const App: React.FC = () => {
     setPrimaVacacionalResult(res);
   };
 
-  const getDaysInPeriod = (period: Periodicity): number => {
-    switch (period) {
-      case Periodicity.WEEKLY: return 7;
-      case Periodicity.BIWEEKLY: return 15;
-      case Periodicity.MONTHLY: return 30;
-      default: return 30;
-    }
-  };
-
-
   return (
     <div className="min-h-screen bg-slate-50 pb-0 flex flex-col">
       {/* Header */}
@@ -112,7 +160,7 @@ const App: React.FC = () => {
             <h1 className="text-xl font-bold text-slate-800">NominaMX</h1>
           </div>
           <span className="text-xs text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full">
-            Tablas ISR 2024
+            Tablas ISR 2026
           </span>
         </div>
       </header>
@@ -120,7 +168,7 @@ const App: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
         
         <div className="text-center mb-8">
-            <h1 className="text-4xl font-extrabold text-slate-800 mb-2">Calculadora de Sueldo Neto México 2024</h1>
+            <h1 className="text-4xl font-extrabold text-slate-800 mb-2">Calculadora de Sueldo Neto México 2026</h1>
             <p className="text-lg text-slate-600 max-w-3xl mx-auto">
               Estima tu salario neto mensual, quincenal o semanal después de impuestos (ISR) y deducciones de ley (IMSS). 
               Nuestra herramienta te ayuda a entender tu nómina y planificar tus finanzas personales.
@@ -140,7 +188,15 @@ const App: React.FC = () => {
               <div className="space-y-5">
                 {/* Periodicity Selector */}
                 <div className="flex flex-col space-y-1">
-                  <label className="text-sm font-medium text-slate-600">Frecuencia de Pago</label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-medium text-slate-600">Frecuencia de Pago</label>
+                    <button 
+                      onClick={addToComparison}
+                      className="text-xs flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 transition-colors"
+                    >
+                      <Scale className="w-3 h-3" /> Comparar
+                    </button>
+                  </div>
                   <div className="grid grid-cols-3 gap-2">
                     {Object.values(Periodicity).map((p) => (
                       <button
@@ -234,40 +290,6 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
-                {result.overtimePay > 0 && (
-                   <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm">
-                      <div className="flex justify-between text-blue-900 font-medium">
-                        <span>Pago por Horas Extra:</span>
-                        <span>+{formatCurrency(result.overtimePay)}</span>
-                      </div>
-                      <div className="flex justify-between text-xs text-blue-600 mt-1">
-                        <span>Monto Gravable (ISR):</span>
-                        <span>{formatCurrency(result.taxableOvertime)}</span>
-                      </div>
-                   </div>
-                )}
-                 {result.holidayPay > 0 && (
-                   <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100 text-sm">
-                      <div className="flex justify-between text-indigo-900 font-medium">
-                        <span>Pago por Días Festivos:</span>
-                        <span>+{formatCurrency(result.holidayPay)}</span>
-                      </div>
-                      <p className="text-xs text-indigo-500 mt-1">Este ingreso es 100% gravable.</p>
-                   </div>
-                )}
-                {result.sundayPremium > 0 && (
-                   <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 text-sm">
-                      <div className="flex justify-between text-yellow-900 font-medium">
-                        <span>Prima Dominical:</span>
-                        <span>+{formatCurrency(result.sundayPremium)}</span>
-                      </div>
-                       <div className="flex justify-between text-xs text-yellow-600 mt-1">
-                        <span>Monto Gravable (ISR):</span>
-                        <span>{formatCurrency(result.taxableSundayPremium)}</span>
-                      </div>
-                   </div>
-                )}
               </div>
             </div>
 
@@ -286,7 +308,6 @@ const App: React.FC = () => {
               </div>
 
               <div className="space-y-5">
-                {/* Simple View: Just common stuff */}
                 <div className="flex flex-col space-y-1">
                    <label className="text-sm font-medium text-slate-600 flex justify-between">
                      <span>IMSS (Estimado: {result.imss > 0 ? formatCurrency(result.imss) : '$0.00'})</span>
@@ -314,11 +335,21 @@ const App: React.FC = () => {
                         value={savingsFundPercent === 0 ? '' : savingsFundPercent}
                         onChange={(e) => setSavingsFundPercent(parseFloat(e.target.value) || 0)}
                       />
-                      <p className="text-xs text-slate-400 text-right">
-                        {formatCurrency(result.savingsFund)}
-                      </p>
-                   </div>
-                   
+                      <div className="flex items-center justify-between mt-1">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3"
+                            checked={employerSavingsFundMatch}
+                            onChange={(e) => setEmployerSavingsFundMatch(e.target.checked)}
+                          />
+                          <span className="text-[10px] text-slate-500 font-medium">Patrón duplica (1:1)</span>
+                        </label>
+                        <p className="text-xs text-slate-400">
+                          {formatCurrency(result.savingsFund)}
+                        </p>
+                      </div>
+                   </div>                   
                    <CurrencyInput
                       label="Caja de Ahorro ($)"
                       value={savingsBoxAmount}
@@ -326,81 +357,105 @@ const App: React.FC = () => {
                    />
                 </div>
                 
-                {showAdvanced && (
-                  <CurrencyInput
-                    label="Otras Deducciones (Crédito Infonavit, etc)"
-                    value={otherDeductions}
-                    onChange={setOtherDeductions}
-                  />
-                )}
+                {/* Other Deductions List */}
+                <div className="pt-4 border-t border-slate-100">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="text-sm font-bold text-slate-700">Otras Deducciones</label>
+                    <button 
+                      onClick={addDeduction}
+                      className="text-xs flex items-center gap-1 bg-orange-50 text-orange-700 px-2 py-1 rounded hover:bg-orange-100 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" /> Añadir
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {otherDeductionsList.map((deduction) => (
+                      <div key={deduction.id} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <input 
+                          type="text" 
+                          className="flex-grow bg-transparent border-none text-xs focus:ring-0 p-0"
+                          value={deduction.label}
+                          onChange={(e) => updateDeduction(deduction.id, e.target.value, deduction.amount)}
+                        />
+                        <div className="w-24">
+                          <CurrencyInput
+                            label=""
+                            value={deduction.amount}
+                            onChange={(val) => updateDeduction(deduction.id, deduction.label, val)}
+                            placeholder="0.00"
+                            minimal
+                          />
+                        </div>
+                        <button onClick={() => removeDeduction(deduction.id)} className="text-slate-400 hover:text-red-500">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {otherDeductionsList.length === 0 && (
+                      <p className="text-xs text-slate-400 italic text-center py-2">No hay otras deducciones (ej. Infonavit, Préstamos)</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-            {/* Aguinaldo Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <Gift className="w-5 h-5 text-pink-500" />
-                Cálculo de Aguinaldo
-              </h2>
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-medium text-slate-600">Días de Aguinaldo</label>
-                <input
-                  type="number"
-                  min="0"
-                  className="block w-full rounded-md border-slate-300 px-3 py-2 text-slate-900 ring-1 ring-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none sm:text-sm"
-                  placeholder="15"
-                  value={aguinaldoDays}
-                  onChange={(e) => setAguinaldoDays(parseInt(e.target.value) || 0)}
-                />
-              </div>
-              <button
-                onClick={handleCalculateAguinaldo}
-                className="mt-4 w-full bg-pink-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-pink-600 transition-colors"
-              >
-                Calcular Aguinaldo
-              </button>
-            </div>
-
-            {/* Prima Vacacional Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <Sun className="w-5 h-5 text-yellow-500" />
-                Cálculo de Prima Vacacional
-              </h2>
-              <div className="grid grid-cols-2 gap-4">
+            {/* Aguinaldo & Prima Vacacional (Combined for space) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                  <Gift className="w-5 h-5 text-pink-500" />
+                  Aguinaldo
+                </h2>
                 <div className="flex flex-col space-y-1">
-                  <label className="text-sm font-medium text-slate-600">Días de Vacaciones</label>
+                  <label className="text-sm font-medium text-slate-600">Días</label>
                   <input
                     type="number"
                     min="0"
                     className="block w-full rounded-md border-slate-300 px-3 py-2 text-slate-900 ring-1 ring-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none sm:text-sm"
-                    placeholder="12"
-                    value={vacationDays}
-                    onChange={(e) => setVacationDays(parseInt(e.target.value) || 0)}
+                    value={aguinaldoDays}
+                    onChange={(e) => setAguinaldoDays(parseInt(e.target.value) || 0)}
                   />
                 </div>
-                <div className="flex flex-col space-y-1">
-                  <label className="text-sm font-medium text-slate-600">% Prima</label>
-                  <div className="relative rounded-md shadow-sm">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <Percent className="w-4 h-4 text-slate-500" />
-                    </div>
+                <button
+                  onClick={handleCalculateAguinaldo}
+                  className="mt-4 w-full bg-pink-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-pink-600 transition-colors"
+                >
+                  Calcular
+                </button>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                  <Sun className="w-5 h-5 text-yellow-500" />
+                  Prima Vac.
+                </h2>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col space-y-1">
+                    <label className="text-sm font-medium text-slate-600">Días</label>
                     <input
                       type="number"
-                      min="25"
-                      className="block w-full rounded-md border-slate-300 pl-9 py-2 text-slate-900 ring-1 ring-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none sm:text-sm"
-                      placeholder="25"
+                      className="block w-full rounded-md border-slate-300 px-2 py-2 text-slate-900 ring-1 ring-slate-300 text-xs"
+                      value={vacationDays}
+                      onChange={(e) => setVacationDays(parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="flex flex-col space-y-1">
+                    <label className="text-sm font-medium text-slate-600">%</label>
+                    <input
+                      type="number"
+                      className="block w-full rounded-md border-slate-300 px-2 py-2 text-slate-900 ring-1 ring-slate-300 text-xs"
                       value={vacationPremiumPercent}
                       onChange={(e) => setVacationPremiumPercent(parseInt(e.target.value) || 0)}
                     />
                   </div>
                 </div>
+                <button
+                  onClick={handleCalculatePrimaVacacional}
+                  className="mt-4 w-full bg-yellow-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-yellow-600 transition-colors"
+                >
+                  Calcular
+                </button>
               </div>
-              <button
-                onClick={handleCalculatePrimaVacacional}
-                className="mt-4 w-full bg-yellow-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-yellow-600 transition-colors"
-              >
-                Calcular Prima Vacacional
-              </button>
             </div>
           </div>
 
@@ -410,10 +465,16 @@ const App: React.FC = () => {
             <div className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
               <div className="bg-slate-900 p-6 text-white flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div>
-                  <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">Nómina {periodicity} (Regular)</p>
+                  <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">Nómina {periodicity} (Neto 2026)</p>
                   <h2 className="text-4xl font-bold tracking-tight">{formatCurrency(result.netRegular)}</h2>
-                  <p className="text-slate-400 text-sm mt-1">Neto a pagar en este periodo</p>
+                  <p className="text-slate-400 text-sm mt-1">Sueldo neto después de impuestos y deducciones</p>
                 </div>
+                <button 
+                  onClick={addToComparison}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                >
+                  <Scale className="w-5 h-5" /> Guardar para Comparar
+                </button>
               </div>
 
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
@@ -436,54 +497,44 @@ const App: React.FC = () => {
                           <span className="font-medium text-slate-900">+{formatCurrency(result.overtimePay)}</span>
                         </li>
                       )}
-                      {result.holidayPay > 0 && (
-                        <li className="flex justify-between items-center text-sm">
-                          <span className="flex items-center gap-2 text-slate-600">
-                            <span className="w-2 h-2 rounded-full bg-indigo-300"></span>
-                            Día Festivo
-                          </span>
-                          <span className="font-medium text-slate-900">+{formatCurrency(result.holidayPay)}</span>
-                        </li>
-                      )}
-                      {result.sundayPremium > 0 && (
-                        <li className="flex justify-between items-center text-sm">
-                          <span className="flex items-center gap-2 text-slate-600">
-                            <span className="w-2 h-2 rounded-full bg-yellow-300"></span>
-                            Prima Dominical
-                          </span>
-                          <span className="font-medium text-slate-900">+{formatCurrency(result.sundayPremium)}</span>
-                        </li>
-                      )}
                       <li className="flex justify-between items-center text-sm pt-2 mt-2 border-t border-slate-100">
                         <span className="flex items-center gap-2 text-slate-600">
                           <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                          ISR Ordinario
+                          ISR Retenido
                         </span>
                         <span className="font-medium text-slate-900">-{formatCurrency(result.isrRegular)}</span>
                       </li>
                       <li className="flex justify-between items-center text-sm">
                         <span className="flex items-center gap-2 text-slate-600">
                           <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                          IMSS
+                          IMSS Obrero
                         </span>
                         <span className="font-medium text-slate-900">-{formatCurrency(result.imss)}</span>
                       </li>
                        {(result.savingsFund > 0 || result.savingsBox > 0) && (
-                        <li className="flex justify-between items-center text-sm">
-                          <span className="flex items-center gap-2 text-slate-600">
-                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                            Ahorro
-                          </span>
-                          <span className="font-medium text-slate-900">-{formatCurrency(result.savingsFund + result.savingsBox)}</span>
-                        </li>
-                      )}
-                      {result.otherDeductions > 0 && (
+                         <li className="flex justify-between items-center text-sm">
+                           <span className="flex items-center gap-2 text-slate-600">
+                             <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                             Ahorro (Retenido)
+                           </span>
+                           <span className="font-medium text-slate-900">-{formatCurrency(result.savingsFund + result.savingsBox)}</span>
+                         </li>
+                       )}
+                       {result.employerSavingsFund > 0 && (
+                         <li className="flex justify-between items-center text-sm">
+                           <span className="flex items-center gap-2 text-slate-600">
+                             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                             Aportación Patronal
+                           </span>
+                           <span className="font-medium text-emerald-600">+{formatCurrency(result.employerSavingsFund)}</span>
+                         </li>
+                       )}                      {result.otherDeductionsTotal > 0 && (
                         <li className="flex justify-between items-center text-sm">
                           <span className="flex items-center gap-2 text-slate-600">
                             <span className="w-2 h-2 rounded-full bg-gray-500"></span>
                             Otras Deducciones
                           </span>
-                          <span className="font-medium text-slate-900">-{formatCurrency(result.otherDeductions)}</span>
+                          <span className="font-medium text-slate-900">-{formatCurrency(result.otherDeductionsTotal)}</span>
                         </li>
                       )}
                       <li className="flex justify-between items-center text-sm pt-3 border-t border-slate-100 mt-2">
@@ -497,6 +548,122 @@ const App: React.FC = () => {
                  </div>
               </div>
             </div>
+
+            {/* Comparisons Section */}
+            {comparisons.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <Scale className="w-5 h-5 text-indigo-600" />
+                    Comparativa de Ofertas
+                  </h3>
+                  <span className="text-xs text-slate-400 font-medium">{comparisons.length} guardadas</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100">
+                        <th className="text-left py-2 font-semibold text-slate-600">Concepto</th>
+                        {comparisons.map((c, i) => (
+                          <th key={i} className="text-right py-2 px-3 font-bold text-indigo-700">
+                            <div className="flex flex-col">
+                              <span>{c.label}</span>
+                              <span className="text-[10px] font-medium text-slate-400">{c.inputs.periodicity}</span>
+                              <button onClick={() => removeComparison(i)} className="text-[10px] text-red-400 hover:text-red-600 font-normal mt-1">Eliminar</button>
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      <tr>
+                        <td className="py-2 text-slate-500">Sueldo Bruto</td>
+                        {comparisons.map((c, i) => (
+                          <td key={i} className="text-right py-2 px-3">{formatCurrency(c.inputs.grossSalary)}</td>
+                        ))}
+                      </tr>
+                      <tr>
+                        <td className="py-2 text-slate-500">Impuestos (ISR)</td>
+                        {comparisons.map((c, i) => (
+                          <td key={i} className="text-right py-2 px-3 text-red-500">-{formatCurrency(c.result.isrRegular)}</td>
+                        ))}
+                      </tr>
+                      <tr>
+                        <td className="py-2 text-slate-500">IMSS + Otras Ded.</td>
+                        {comparisons.map((c, i) => (
+                          <td key={i} className="text-right py-2 px-3 text-red-500">-{formatCurrency(c.result.totalDeductionsRegular - c.result.isrRegular - c.result.savingsFund - c.result.savingsBox)}</td>
+                        ))}
+                      </tr>
+                      {(comparisons.some(c => c.result.savingsFund > 0 || c.result.savingsBox > 0)) && (
+                        <tr>
+                          <td className="py-2 text-slate-500">Ahorro (Retenido)</td>
+                          {comparisons.map((c, i) => (
+                            <td key={i} className="text-right py-2 px-3 text-blue-500">-{formatCurrency(c.result.savingsFund + c.result.savingsBox)}</td>
+                          ))}
+                        </tr>
+                      )}
+                      <tr className="bg-slate-50/50 font-bold">
+                        <td className="py-3 px-2 text-slate-800 border-t border-slate-100">Sueldo NETO ({periodicity})</td>
+                        {comparisons.map((c, i) => (
+                          <td key={i} className="text-right py-3 px-3 text-slate-900 border-t border-slate-100">{formatCurrency(c.result.netRegular)}</td>
+                        ))}
+                      </tr>
+
+                      {/* Benefits Section */}
+                      <tr className="bg-indigo-50/30">
+                        <td colSpan={comparisons.length + 1} className="py-2 px-2 text-xs font-bold text-indigo-800 uppercase tracking-wider">Beneficios Anuales</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 text-slate-500 flex items-center gap-1">
+                          <Gift className="w-3 h-3" /> Aguinaldo (Neto)
+                        </td>
+                        {comparisons.map((c, i) => (
+                          <td key={i} className="text-right py-2 px-3">{formatCurrency(c.aguinaldo?.netAguinaldo || 0)}</td>
+                        ))}
+                      </tr>
+                      <tr>
+                        <td className="py-2 text-slate-500 flex items-center gap-1">
+                          <Sun className="w-3 h-3" /> Prima Vacacional (Neto)
+                        </td>
+                        {comparisons.map((c, i) => (
+                          <td key={i} className="text-right py-2 px-3">{formatCurrency(c.primaVacacional?.netPrimaVacacional || 0)}</td>
+                        ))}
+                      </tr>
+                      {comparisons.some(c => c.result.employerSavingsFund > 0) && (
+                        <tr>
+                          <td className="py-2 text-slate-500">Fondo Ahorro (Patrón)</td>
+                          {comparisons.map((c, i) => (
+                            <td key={i} className="text-right py-2 px-3 text-green-600">+{formatCurrency(c.result.employerSavingsFund * (getPeriodFactor(c.inputs.periodicity) * 12))}</td>
+                          ))}
+                        </tr>
+                      )}
+                      
+                      {/* Subtotal Anual */}
+                      <tr className="bg-green-50/50 font-bold">
+                        <td className="py-3 px-2 text-slate-800">TOTAL ANUAL (Neto + Ahorros)</td>
+                        {comparisons.map((c, i) => {
+                          const factor = getPeriodFactor(c.inputs.periodicity);
+                          const annualNet = c.result.netRegular * factor * 12;
+                          const annualAguinaldo = c.aguinaldo?.netAguinaldo || 0;
+                          const annualPrimaVac = c.primaVacacional?.netPrimaVacacional || 0;
+                          const annualSavingsEmployee = (c.result.savingsFund + c.result.savingsBox) * factor * 12;
+                          const annualSavingsEmployer = c.result.employerSavingsFund * factor * 12;
+                          const total = annualNet + annualAguinaldo + annualPrimaVac + annualSavingsEmployee + annualSavingsEmployer;
+                          return (
+                            <td key={i} className="text-right py-3 px-3 text-green-700">
+                              <div className="flex flex-col">
+                                <span>{formatCurrency(total)}</span>
+                                <span className="text-[10px] font-normal text-slate-500">Mensual prom: {formatCurrency(total / 12)}</span>
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {/* Aguinaldo Card - SEPARATE */}
             {aguinaldoResult && (
@@ -527,13 +694,6 @@ const App: React.FC = () => {
                          <p className="text-2xl font-bold text-green-600">{formatCurrency(aguinaldoResult.netAguinaldo)}</p>
                       </div>
                    </div>
-
-                   <div className="mt-4 pt-4 border-t border-pink-100/50 text-xs text-pink-700 flex items-start gap-2">
-                      <Info className="w-4 h-4 flex-shrink-0" />
-                      <p>
-                        Exento: {formatCurrency(aguinaldoResult.exemptAguinaldo)} (30 UMAs). El ISR es un cálculo simplificado.
-                      </p>
-                   </div>
                  </div>
               </div>
             )}
@@ -549,7 +709,7 @@ const App: React.FC = () => {
                      <div className="p-2 bg-yellow-100 rounded-lg">
                         <Sun className="w-5 h-5 text-yellow-600" />
                      </div>
-                     <h3 className="text-lg font-bold text-yellow-900">Resultado de la Prima Vacacional</h3>
+                     <h3 className="text-lg font-bold text-yellow-900">Prima Vacacional</h3>
                    </div>
                    
                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -566,13 +726,6 @@ const App: React.FC = () => {
                          <p className="text-xs text-yellow-600 uppercase font-bold mb-1">Neto a Recibir</p>
                          <p className="text-2xl font-bold text-green-600">{formatCurrency(primaVacacionalResult.netPrimaVacacional)}</p>
                       </div>
-                   </div>
-
-                   <div className="mt-4 pt-4 border-t border-yellow-100/50 text-xs text-yellow-700 flex items-start gap-2">
-                      <Info className="w-4 h-4 flex-shrink-0" />
-                      <p>
-                        Exento: {formatCurrency(primaVacacionalResult.exemptPrimaVacacional)} (15 UMAs). El ISR es un cálculo simplificado.
-                      </p>
                    </div>
                  </div>
               </div>
@@ -629,19 +782,13 @@ const App: React.FC = () => {
               </p>
               <h3 className="font-semibold text-slate-700">¿Cómo funciona?</h3>
               <p>
-                Utilizamos las tablas de Impuesto Sobre la Renta (ISR) y las cuotas del Instituto Mexicano del Seguro Social (IMSS) vigentes para el año 2024. 
+                Utilizamos las tablas de Impuesto Sobre la Renta (ISR) y las cuotas del Instituto Mexicano del Seguro Social (IMSS) vigentes para el año 2026. 
                 Al ingresar tu salario bruto y la frecuencia con la que recibes tu pago, la calculadora desglosa las deducciones y te muestra el monto final que deberías recibir.
               </p>
               <ul>
                 <li><strong>ISR:</strong> Es el impuesto que se aplica directamente a tus ingresos.</li>
                 <li><strong>IMSS:</strong> Son las aportaciones para tu seguridad social, que cubren enfermedad, maternidad, invalidez, retiro, etc.</li>
               </ul>
-              <h3 className="font-semibold text-slate-700">Aviso Legal</h3>
-              <p>
-                Esta calculadora es una herramienta de simulación y debe ser utilizada únicamente con fines informativos y de referencia. 
-                Los resultados son una estimación y pueden no reflejar con total exactitud los cálculos de tu empleador, ya que pueden existir otras variables o deducciones no contempladas (como préstamos, cuotas sindicales, etc.). 
-                No nos hacemos responsables de las decisiones tomadas con base en la información aquí presentada. Para cálculos precisos y oficiales, consulta siempre a tu departamento de Recursos Humanos o a un contador profesional.
-              </p>
             </div>
         </div>
         

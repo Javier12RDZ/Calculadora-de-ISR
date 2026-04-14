@@ -1,7 +1,7 @@
-import { ISR_TABLE_2024_MONTHLY, ESTIMATED_IMSS_RATE, UMA_2024_DAILY } from '../constants';
+import { ISR_TABLE_2026_MONTHLY, ESTIMATED_IMSS_RATE, UMA_2026_DAILY } from '../constants';
 import { CalculationResult, IsrBracket, Periodicity, TaxInputs, AguinaldoResult, PrimaVacacionalResult } from '../types';
 
-const getPeriodFactor = (period: Periodicity): number => {
+export const getPeriodFactor = (period: Periodicity): number => {
   switch (period) {
     case Periodicity.WEEKLY: return 4.33; // Average weeks in a month
     case Periodicity.BIWEEKLY: return 2;
@@ -10,7 +10,7 @@ const getPeriodFactor = (period: Periodicity): number => {
   }
 };
 
-const getDaysInPeriod = (period: Periodicity): number => {
+export const getDaysInPeriod = (period: Periodicity): number => {
   switch (period) {
     case Periodicity.WEEKLY: return 7;
     case Periodicity.BIWEEKLY: return 15;
@@ -27,9 +27,9 @@ const calculateIsrForAmount = (taxableAmount: number, periodFactor: Periodicity)
   // Normalize to Monthly for Table Lookup
   const monthlyTaxableIncome = taxableAmount * factor;
 
-  const applicableBracket = ISR_TABLE_2024_MONTHLY.find(
+  const applicableBracket = ISR_TABLE_2026_MONTHLY.find(
     (b) => monthlyTaxableIncome >= b.lowerLimit && monthlyTaxableIncome <= b.upperLimit
-  ) || ISR_TABLE_2024_MONTHLY[ISR_TABLE_2024_MONTHLY.length - 1];
+  ) || ISR_TABLE_2026_MONTHLY[ISR_TABLE_2026_MONTHLY.length - 1];
 
   const surplus = monthlyTaxableIncome - applicableBracket.lowerLimit;
   const marginalTax = surplus * (applicableBracket.percent / 100);
@@ -44,8 +44,9 @@ export const calculateTaxes = (inputs: TaxInputs): CalculationResult => {
     grossSalary, 
     periodicity, 
     savingsFundPercent, 
+    employerSavingsFundMatch,
     savingsBoxAmount, 
-    otherDeductions, 
+    otherDeductionsList, 
     imssOverride, 
     overtimeHours,
     holidaysWorked,
@@ -72,14 +73,14 @@ export const calculateTaxes = (inputs: TaxInputs): CalculationResult => {
   const totalOvertimePay = amountDouble + amountTriple;
 
   const potentialExemption = amountDouble * 0.50;
-  const exemptionCap = (5 * UMA_2024_DAILY) * weeksInPeriod;
+  const exemptionCap = (5 * UMA_2026_DAILY) * weeksInPeriod;
   const exemptOvertime = Math.min(potentialExemption, exemptionCap);
   const taxableOvertime = totalOvertimePay - exemptOvertime;
 
   // --- 3. Holiday & Sunday Pay ---
   const holidayPay = holidaysWorked * dailySalary * 2; // Additional pay
   const sundayPremium = sundaysWorked * dailySalary * 0.25;
-  const exemptSundayPremium = Math.min(sundayPremium, sundaysWorked * UMA_2024_DAILY);
+  const exemptSundayPremium = Math.min(sundayPremium, sundaysWorked * UMA_2026_DAILY);
   const taxableSundayPremium = sundayPremium - exemptSundayPremium;
 
   // --- 4. Tax Calculation ---
@@ -91,8 +92,11 @@ export const calculateTaxes = (inputs: TaxInputs): CalculationResult => {
     ? imssOverride 
     : grossSalary * ESTIMATED_IMSS_RATE;
 
+  const otherDeductionsTotal = otherDeductionsList.reduce((sum, d) => sum + d.amount, 0);
+
   const periodSavingsFund = grossSalary * (savingsFundPercent / 100);
-  const totalDeductionsRegular = isrRegular + periodImss + periodSavingsFund + savingsBoxAmount + otherDeductions;
+  const employerSavingsFund = employerSavingsFundMatch ? periodSavingsFund : 0;
+  const totalDeductionsRegular = isrRegular + periodImss + periodSavingsFund + savingsBoxAmount + otherDeductionsTotal;
 
   // --- 6. Net Results ---
   const totalIncome = grossSalary + totalOvertimePay + holidayPay + sundayPremium;
@@ -115,8 +119,9 @@ export const calculateTaxes = (inputs: TaxInputs): CalculationResult => {
     
     imss: Math.max(0, periodImss),
     savingsFund: periodSavingsFund,
+    employerSavingsFund: employerSavingsFund,
     savingsBox: savingsBoxAmount,
-    otherDeductions,
+    otherDeductionsTotal,
     totalDeductionsRegular,
     
     netRegular: Math.max(0, netRegular),
@@ -135,13 +140,12 @@ export const calculateAguinaldo = (dailySalary: number, aguinaldoDays: number): 
   };
 
   const aguinaldoPay = dailySalary * aguinaldoDays;
-  const aguinaldoExemptionLimit = 30 * UMA_2024_DAILY;
+  const aguinaldoExemptionLimit = 30 * UMA_2026_DAILY;
   const exemptAguinaldo = Math.min(aguinaldoPay, aguinaldoExemptionLimit);
   const taxableAguinaldo = aguinaldoPay - exemptAguinaldo;
   
-  // Simplified ISR calculation for aguinaldo. This is not 100% accurate.
-  // A proper calculation requires a more complex method (Art. 96 LISR).
-  const isrAguinaldo = taxableAguinaldo * (ISR_TABLE_2024_MONTHLY[ISR_TABLE_2024_MONTHLY.length - 1].percent / 100);
+  // Simplified ISR calculation for aguinaldo.
+  const isrAguinaldo = taxableAguinaldo * (ISR_TABLE_2026_MONTHLY[ISR_TABLE_2026_MONTHLY.length - 1].percent / 100);
   const netAguinaldo = aguinaldoPay - isrAguinaldo;
 
   return {
@@ -164,12 +168,12 @@ export const calculatePrimaVacacional = (dailySalary: number, vacationDays: numb
 
   const salaryForVacationDays = dailySalary * vacationDays;
   const primaVacacionalPay = salaryForVacationDays * (vacationPremiumPercent / 100);
-  const primaExemptionLimit = 15 * UMA_2024_DAILY;
+  const primaExemptionLimit = 15 * UMA_2026_DAILY;
   const exemptPrimaVacacional = Math.min(primaVacacionalPay, primaExemptionLimit);
   const taxablePrimaVacacional = primaVacacionalPay - exemptPrimaVacacional;
 
   // Simplified ISR calculation.
-  const isrPrimaVacacional = taxablePrimaVacacional * (ISR_TABLE_2024_MONTHLY[ISR_TABLE_2024_MONTHLY.length - 1].percent / 100);
+  const isrPrimaVacacional = taxablePrimaVacacional * (ISR_TABLE_2026_MONTHLY[ISR_TABLE_2026_MONTHLY.length - 1].percent / 100);
   const netPrimaVacacional = primaVacacionalPay - isrPrimaVacacional;
 
   return {

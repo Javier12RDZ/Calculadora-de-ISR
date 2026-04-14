@@ -6,6 +6,7 @@ interface CurrencyInputProps {
   onChange: (val: number) => void;
   prefix?: string;
   placeholder?: string;
+  minimal?: boolean;
 }
 
 export const CurrencyInput: React.FC<CurrencyInputProps> = ({ 
@@ -13,8 +14,28 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
   value, 
   onChange, 
   prefix = "$", 
-  placeholder = "0.00" 
+  placeholder = "0.00",
+  minimal = false
 }) => {
+  if (minimal) {
+    return (
+      <div className="relative rounded-md shadow-sm">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2">
+          <span className="text-slate-400 text-xs">{prefix}</span>
+        </div>
+        <input
+          type="number"
+          min="0"
+          step="any"
+          className="block w-full rounded border-slate-200 pl-5 py-1 text-slate-900 placeholder:text-slate-300 focus:ring-1 focus:ring-blue-500 focus:outline-none text-xs transition-all"
+          placeholder={placeholder}
+          value={value === 0 ? '' : value}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col space-y-1">
       <label className="text-sm font-medium text-slate-600">{label}</label>

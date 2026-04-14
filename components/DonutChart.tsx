@@ -8,11 +8,27 @@ interface DonutChartProps {
 
 export const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
   const chartData = [
-    { name: 'Neto', value: data.netRegular, color: '#22c55e' }, // Green-500
-    { name: 'ISR', value: data.isrRegular, color: '#ef4444' }, // Red-500
-    { name: 'IMSS', value: data.imss, color: '#f97316' }, // Orange-500
-    { name: 'Ahorro/Otros', value: data.savingsFund + data.savingsBox + data.otherDeductions, color: '#3b82f6' }, // Blue-500
+    { name: 'Neto', value: data.netRegular, color: '#4CAF50' }, // Green
+    { name: 'ISR', value: data.isrRegular, color: '#FF5252' }, // Red
+    { name: 'IMSS', value: data.imss, color: '#FFC107' }, // Amber/Orange
+    { name: 'Ahorro/Otros', value: data.savingsFund + data.savingsBox + data.otherDeductionsTotal, color: '#2196F3' }, // Blue
   ].filter(d => d.value > 0);
+
+  const formatCurrency = (val: number) => 
+    new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
+
+  const CustomLabel = ({ viewBox, totalAmount }: any) => {
+    // Add null check for viewBox to prevent white screen crash
+    if (!viewBox) return null;
+    
+    const { cx, cy } = viewBox;
+    return (
+      <text x={cx} y={cy} fill="#333" textAnchor="middle" dominantBaseline="central">
+        <tspan x={cx} dy="-0.5em" className="text-sm font-medium">Total Neto</tspan>
+        <tspan x={cx} dy="1.5em" className="text-xl font-bold">{formatCurrency(totalAmount)}</tspan>
+      </text>
+    );
+  };
 
   return (
     <div className="h-64 w-full">
@@ -26,10 +42,12 @@ export const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
             outerRadius={80}
             paddingAngle={5}
             dataKey="value"
+            labelLine={false}
           >
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
             ))}
+            <CustomLabel totalAmount={data.netRegular} />
           </Pie>
           <Tooltip 
             formatter={(value: number) => [`$${value.toFixed(2)}`, 'Monto']}

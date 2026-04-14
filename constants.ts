@@ -1,9 +1,8 @@
 import { IsrBracket } from './types';
 
-// Standard Monthly ISR Table 2024 (Mexico)
-// Note: For accurate payroll, specific period tables exist, but standard practice 
-// for calculators is to annualize or month-alize, calculate, and scale back.
-export const ISR_TABLE_2024_MONTHLY: IsrBracket[] = [
+// Standard Monthly ISR Table 2026 (Mexico)
+// Based on 2025 tables (as they often remain the same if inflation < 10%)
+export const ISR_TABLE_2026_MONTHLY: IsrBracket[] = [
   { lowerLimit: 0.01, upperLimit: 746.04, fixedQuota: 0.00, percent: 1.92 },
   { lowerLimit: 746.05, upperLimit: 6332.05, fixedQuota: 14.32, percent: 6.40 },
   { lowerLimit: 6332.06, upperLimit: 11128.01, fixedQuota: 371.83, percent: 10.88 },
@@ -17,11 +16,10 @@ export const ISR_TABLE_2024_MONTHLY: IsrBracket[] = [
   { lowerLimit: 375975.62, upperLimit: Infinity, fixedQuota: 117912.32, percent: 35.00 },
 ];
 
-// UMA 2024 (Unidad de Medida y Actualización)
-export const UMA_2024_DAILY = 108.57;
-export const UMA_2024_MONTHLY = 3300.53;
+// UMA 2026 (Unidad de Medida y Actualización)
+// Estimated for 2026 based on 2025 ($113.14)
+export const UMA_2026_DAILY = 117.67; 
+export const UMA_2026_MONTHLY = 3577.17;
 
 // Approximate IMSS deduction factor for employees (simplification of the complex calculation based on SBC)
-// Real calculation depends on SBC, Risk Class, etc. 
-// A common estimate for standard office jobs is around 2.3% - 2.8% of gross.
 export const ESTIMATED_IMSS_RATE = 0.027; 

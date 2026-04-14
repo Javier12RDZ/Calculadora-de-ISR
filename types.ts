@@ -11,16 +11,26 @@ export interface IsrBracket {
   percent: number;
 }
 
+export interface Deduction {
+  id: string;
+  label: string;
+  amount: number;
+}
+
 export interface TaxInputs {
   grossSalary: number;
   periodicity: Periodicity;
   imssOverride?: number; // Optional manual IMSS
   savingsFundPercent: number; // Fondo de ahorro %
+  employerSavingsFundMatch: boolean; // Si el patron pone su parte (1:1)
   savingsBoxAmount: number; // Caja de ahorro fixed amount
-  otherDeductions: number;
+  otherDeductionsList: Deduction[];
   overtimeHours: number;
   holidaysWorked: number;
   sundaysWorked: number;
+  aguinaldoDays: number;
+  vacationDays: number;
+  vacationPremiumPercent: number;
 }
 
 export interface CalculationResult {
@@ -45,8 +55,9 @@ export interface CalculationResult {
 
   imss: number;
   savingsFund: number;
+  employerSavingsFund: number; // Aportacion patronal
   savingsBox: number;
-  otherDeductions: number;
+  otherDeductionsTotal: number;
   totalDeductionsRegular: number;
 
   // Nets
@@ -69,4 +80,12 @@ export interface PrimaVacacionalResult {
   taxablePrimaVacacional: number;
   isrPrimaVacacional: number;
   netPrimaVacacional: number;
+}
+
+export interface ComparisonData {
+  label: string;
+  inputs: TaxInputs;
+  result: CalculationResult;
+  aguinaldo?: AguinaldoResult;
+  primaVacacional?: PrimaVacacionalResult;
 }
