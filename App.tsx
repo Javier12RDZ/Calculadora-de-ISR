@@ -8,6 +8,8 @@ import { EducationalContent } from './components/EducationalContent';
 import { FaqSection } from './components/FaqSection';
 import { Footer } from './components/Footer';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
+import { TermsOfUse } from './components/TermsOfUse';
+import { ContactInfo } from './components/ContactInfo';
 
 const App: React.FC = () => {
   // State for inputs
@@ -36,7 +38,12 @@ const App: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showContact, setShowContact] = useState(false);
+  
   const privacyRef = useRef<HTMLDivElement>(null);
+  const termsRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (dailySalary > 0) {
@@ -61,6 +68,18 @@ const App: React.FC = () => {
     }
   }, [showPrivacy]);
 
+  useEffect(() => {
+    if (showTerms && termsRef.current) {
+      termsRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [showTerms]);
+
+  useEffect(() => {
+    if (showContact && contactRef.current) {
+      contactRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [showContact]);
+
   // Calculated Result
   const result: CalculationResult = useMemo(() => {
     return calculateTaxes({
@@ -79,6 +98,21 @@ const App: React.FC = () => {
       vacationPremiumPercent,
     });
   }, [grossSalary, periodicity, imssOverride, savingsFundPercent, employerSavingsFundMatch, savingsBoxAmount, otherDeductionsList, overtimeHours, holidaysWorked, sundaysWorked, aguinaldoDays, vacationDays, vacationPremiumPercent]);
+
+  // Calculate Annual Disposable Income (Sueldo Neto + Aguinaldo + Prima Vacacional + Savings Employee + Savings Employer)
+  const annualDisposable = useMemo(() => {
+    const annualFactor = periodicity === Periodicity.WEEKLY ? 52 : periodicity === Periodicity.BIWEEKLY ? 24 : 12;
+    const baseNetAnnual = result.netRegular * annualFactor;
+    const savingsRetainedAnnual = (result.savingsFund + result.savingsBox) * annualFactor;
+    const savingsEmployerAnnual = result.employerSavingsFund * annualFactor;
+
+    // Calculate dynamic estimates for Aguinaldo and Prima Vacacional
+    const currentDailySalary = dailySalary > 0 ? dailySalary : (grossSalary > 0 ? grossSalary / getDaysInPeriod(periodicity) : 0);
+    const estimatedAguinaldo = calculateAguinaldo(currentDailySalary, aguinaldoDays).netAguinaldo;
+    const estimatedPrimaVac = calculatePrimaVacacional(currentDailySalary, vacationDays, vacationPremiumPercent).netPrimaVacacional;
+
+    return baseNetAnnual + savingsRetainedAnnual + savingsEmployerAnnual + estimatedAguinaldo + estimatedPrimaVac;
+  }, [result, periodicity, dailySalary, grossSalary, aguinaldoDays, vacationDays, vacationPremiumPercent]);
 
   // Handlers
   const formatCurrency = (val: number) => 
@@ -504,6 +538,12 @@ const App: React.FC = () => {
                         </span>
                         <span className="font-medium text-slate-900">-{formatCurrency(result.isrRegular)}</span>
                       </li>
+                      {result.subsidioRegular > 0 && (
+                        <li className="flex justify-between items-center text-xs pl-4 text-slate-500 -mt-1">
+                          <span>Subsidio Aplicado</span>
+                          <span className="text-emerald-600 font-medium">+{formatCurrency(result.subsidioRegular)}</span>
+                        </li>
+                      )}
                       <li className="flex justify-between items-center text-sm">
                         <span className="flex items-center gap-2 text-slate-600">
                           <span className="w-2 h-2 rounded-full bg-orange-500"></span>
@@ -588,6 +628,16 @@ const App: React.FC = () => {
                           <td key={i} className="text-right py-2 px-3 text-red-500">-{formatCurrency(c.result.isrRegular)}</td>
                         ))}
                       </tr>
+                      {comparisons.some(c => c.result.subsidioRegular > 0) && (
+                        <tr className="text-xs text-slate-500">
+                          <td className="py-1 pl-4 text-slate-400">Subsidio Aplicado</td>
+                          {comparisons.map((c, i) => (
+                            <td key={i} className="text-right py-1 px-3 text-emerald-600 font-medium">
+                              {c.result.subsidioRegular > 0 ? `+${formatCurrency(c.result.subsidioRegular)}` : '-'}
+                            </td>
+                          ))}
+                        </tr>
+                      )}
                       <tr>
                         <td className="py-2 text-slate-500">IMSS + Otras Ded.</td>
                         {comparisons.map((c, i) => (
@@ -750,7 +800,10 @@ const App: React.FC = () => {
                  <div>
                    <p className="text-xs text-slate-500 font-medium uppercase">Disponible Anual (Estimado)</p>
                    <p className="text-lg font-bold text-slate-800">
-                     {formatCurrency((result.netRegular * (periodicity === Periodicity.WEEKLY ? 52 : periodicity === Periodicity.BIWEEKLY ? 24 : 12)) + (aguinaldoResult?.netAguinaldo ?? 0) + (primaVacacionalResult?.netPrimaVacacional ?? 0) )}
+                     {formatCurrency(annualDisposable)}
+                   </p>
+                   <p className="text-[10px] text-slate-400 mt-1">
+                     Incluye sueldos netos, aguinaldo, prima vacacional y caja/fondo de ahorro (empleado + patrón).
                    </p>
                  </div>
               </div>
@@ -802,9 +855,37 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {showTerms && (
+          <div ref={termsRef}>
+            <TermsOfUse />
+          </div>
+        )}
+
+        {showContact && (
+          <div ref={contactRef}>
+            <ContactInfo />
+          </div>
+        )}
+
       </main>
       
-      <Footer onShowPrivacy={() => setShowPrivacy(!showPrivacy)} />
+      <Footer 
+        onShowPrivacy={() => {
+          setShowPrivacy(!showPrivacy);
+          setShowTerms(false);
+          setShowContact(false);
+        }}
+        onShowTerms={() => {
+          setShowTerms(!showTerms);
+          setShowPrivacy(false);
+          setShowContact(false);
+        }}
+        onShowContact={() => {
+          setShowContact(!showContact);
+          setShowPrivacy(false);
+          setShowTerms(false);
+        }}
+      />
     </div>
   );
 };

@@ -12,7 +12,7 @@ export const EducationalContent: React.FC = () => {
             <TrendingUp className="w-8 h-8 text-blue-600" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">¿Qué es el ISR y cómo se calcula en 2024?</h2>
+            <h2 className="text-2xl font-bold text-slate-800">¿Qué es el ISR y cómo se calcula en 2026?</h2>
             <p className="text-slate-500 mt-1">Impuesto Sobre la Renta en México</p>
           </div>
         </div>
@@ -23,7 +23,7 @@ export const EducationalContent: React.FC = () => {
           </p>
           <h3 className="text-lg font-semibold text-slate-800 mt-4">El Proceso de Cálculo</h3>
           <p>
-            El cálculo del ISR no es lineal; es progresivo. Esto significa que mientras más ganas, mayor es el porcentaje que pagas. El proceso se basa en las <strong>Tablas de ISR 2024</strong> publicadas en el Diario Oficial de la Federación (DOF).
+            El cálculo del ISR no es lineal; es progresivo. Esto significa que mientras más ganas, mayor es el porcentaje que pagas. El proceso se basa en las <strong>Tablas de ISR 2026</strong> publicadas en el Diario Oficial de la Federación (DOF).
           </p>
           <ol className="list-decimal pl-5 space-y-2 mt-2">
             <li><strong>Identificar el Ingreso Gravable:</strong> Se toma tu salario bruto y se restan los conceptos exentos de impuestos.</li>
@@ -73,17 +73,17 @@ export const EducationalContent: React.FC = () => {
             <BookOpen className="w-8 h-8 text-orange-600" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Subsidio para el Empleo 2024</h2>
+            <h2 className="text-2xl font-bold text-slate-800">Subsidio para el Empleo 2026</h2>
             <p className="text-slate-500 mt-1">Apoyo para salarios bajos</p>
           </div>
         </div>
 
         <div className="prose prose-slate max-w-none text-slate-600">
           <p>
-            El <strong>Subsidio para el Empleo</strong> es un beneficio fiscal diseñado para apoyar a los trabajadores con menores ingresos. Si tu salario es bajo, el gobierno puede otorgarte un monto mensual que reduce el ISR a pagar, e incluso puede resultar en un saldo a favor.
+            El <strong>Subsidio para el Empleo</strong> es un beneficio fiscal diseñado para apoyar a los trabajadores con menores ingresos. Si tu salario es bajo, se aplica un crédito fiscal que reduce el ISR que te corresponde pagar.
           </p>
           <p className="mt-2">
-            En 2024, este subsidio se aplica automáticamente a quienes ganan menos de cierta cantidad mensual (aproximadamente $7,382.33 MXN en la zona general, aunque esto puede variar según las actualizaciones fiscales).
+            En 2026, este subsidio se calcula como el 15.02% del valor de la UMA mensual (equivalente a $535.65 MXN mensuales) y se aplica automáticamente a quienes ganan un salario gravable que no exceda de $11,492.66 MXN mensuales. Cabe destacar que con las reformas vigentes, si el subsidio supera al ISR calculado, este remanente ya no se entrega en efectivo al trabajador, sino que simplemente reduce su impuesto de retención a cero.
           </p>
         </div>
       </div>

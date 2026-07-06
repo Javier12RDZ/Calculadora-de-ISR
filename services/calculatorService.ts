@@ -1,4 +1,4 @@
-import { ISR_TABLE_2026_MONTHLY, ESTIMATED_IMSS_RATE, UMA_2026_DAILY } from '../constants';
+import { ISR_TABLE_2026_MONTHLY, ESTIMATED_IMSS_RATE, UMA_2026_DAILY, SUBSIDIO_2026_LIMIT, SUBSIDIO_2026_MONTHLY } from '../constants';
 import { CalculationResult, IsrBracket, Periodicity, TaxInputs, AguinaldoResult, PrimaVacacionalResult } from '../types';
 
 export const getPeriodFactor = (period: Periodicity): number => {
@@ -83,9 +83,18 @@ export const calculateTaxes = (inputs: TaxInputs): CalculationResult => {
   const exemptSundayPremium = Math.min(sundayPremium, sundaysWorked * UMA_2026_DAILY);
   const taxableSundayPremium = sundayPremium - exemptSundayPremium;
 
-  // --- 4. Tax Calculation ---
+  // --- 4. Tax Calculation & Subsidio ---
   const taxableIncomeRegular = grossSalary + taxableOvertime + holidayPay + taxableSundayPremium;
-  const isrRegular = calculateIsrForAmount(taxableIncomeRegular, periodicity);
+  const rawIsrRegular = calculateIsrForAmount(taxableIncomeRegular, periodicity);
+  
+  // Calculate Subsidio al Empleo (proportional to periodicity based on monthly limit)
+  const factor = getPeriodFactor(periodicity);
+  const monthlyTaxableIncome = taxableIncomeRegular * factor;
+  const monthlySubsidio = monthlyTaxableIncome <= SUBSIDIO_2026_LIMIT ? SUBSIDIO_2026_MONTHLY : 0;
+  const periodSubsidio = monthlySubsidio / factor;
+  
+  // Apply subsidio to ISR (it can only reduce ISR to zero, no cash refund)
+  const finalIsrRegular = Math.max(0, rawIsrRegular - periodSubsidio);
 
   // --- 5. Deductions (Regular) ---
   const periodImss = imssOverride !== undefined && imssOverride !== null && !isNaN(imssOverride)
@@ -96,7 +105,7 @@ export const calculateTaxes = (inputs: TaxInputs): CalculationResult => {
 
   const periodSavingsFund = grossSalary * (savingsFundPercent / 100);
   const employerSavingsFund = employerSavingsFundMatch ? periodSavingsFund : 0;
-  const totalDeductionsRegular = isrRegular + periodImss + periodSavingsFund + savingsBoxAmount + otherDeductionsTotal;
+  const totalDeductionsRegular = finalIsrRegular + periodImss + periodSavingsFund + savingsBoxAmount + otherDeductionsTotal;
 
   // --- 6. Net Results ---
   const totalIncome = grossSalary + totalOvertimePay + holidayPay + sundayPremium;
@@ -115,7 +124,8 @@ export const calculateTaxes = (inputs: TaxInputs): CalculationResult => {
     
     taxableIncomeRegular,
     
-    isrRegular,
+    isrRegular: finalIsrRegular,
+    subsidioRegular: periodSubsidio,
     
     imss: Math.max(0, periodImss),
     savingsFund: periodSavingsFund,
@@ -126,7 +136,7 @@ export const calculateTaxes = (inputs: TaxInputs): CalculationResult => {
     
     netRegular: Math.max(0, netRegular),
     
-    effectiveTaxRate: totalIncome > 0 ? (isrRegular / totalIncome) * 100 : 0,
+    effectiveTaxRate: totalIncome > 0 ? (finalIsrRegular / totalIncome) * 100 : 0,
   };
 };
 

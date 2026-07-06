@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://Javier12RDZ.github.io/Calculadora-de-ISR/sitemap.xml

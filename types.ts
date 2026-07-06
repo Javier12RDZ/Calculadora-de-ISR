@@ -51,7 +51,9 @@ export interface CalculationResult {
   taxableIncomeRegular: number; // Base taxable (salary + OT)
 
   // Taxes
-  isrRegular: number;   // Tax on regular pay
+  isrRegular: number;   // Tax on regular pay (after subsidio)
+  subsidioRegular: number; // Subsidio al empleo applied
+
 
   imss: number;
   savingsFund: number;

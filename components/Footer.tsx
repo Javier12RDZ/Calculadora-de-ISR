@@ -2,9 +2,11 @@ import React from 'react';
 
 interface FooterProps {
   onShowPrivacy: () => void;
+  onShowTerms: () => void;
+  onShowContact: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onShowPrivacy }) => {
+export const Footer: React.FC<FooterProps> = ({ onShowPrivacy, onShowTerms, onShowContact }) => {
   return (
     <footer className="bg-white border-t border-slate-200 mt-12 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -14,14 +16,18 @@ export const Footer: React.FC<FooterProps> = ({ onShowPrivacy }) => {
           <p className="text-xs text-slate-400 mt-1">© {new Date().getFullYear()} Todos los derechos reservados.</p>
         </div>
         
-        <div className="flex gap-6 text-sm text-slate-600">
+        <div className="flex flex-wrap gap-4 md:gap-6 text-sm text-slate-600">
           <button onClick={onShowPrivacy} className="hover:text-blue-600 transition-colors">
             Política de Privacidad
           </button>
           <span className="text-slate-300">|</span>
-          <a href="#" className="hover:text-blue-600 transition-colors pointer-events-none text-slate-400">
+          <button onClick={onShowTerms} className="hover:text-blue-600 transition-colors">
             Términos de Uso
-          </a>
+          </button>
+          <span className="text-slate-300">|</span>
+          <button onClick={onShowContact} className="hover:text-blue-600 transition-colors">
+            Contacto
+          </button>
         </div>
       </div>
     </footer>

@@ -157,32 +157,23 @@ Hoy se trabajó en la preparación de la ficha de la aplicación para Google Pla
 -   **Generación del PEM:** Se ejecutó exitosamente el comando para exportar el certificado:
     -   Archivo generado: `nominamx_calculadora_fiscal\Version_APK\upload-key.pem`.
 
-# Resumen de Cambios - 12 de Abril de 2026
+# Resumen de Cambios - 13 de Abril de 2026
 
-Hoy se realizaron actualizaciones importantes para el ejercicio fiscal 2026 y nuevas funcionalidades de análisis.
+Se expandió el módulo de comparación y se añadieron beneficios adicionales para un cálculo anual más preciso.
 
-## 1. Actualización Fiscal 2026
-- **Tablas ISR 2026:** Se actualizaron las tablas mensuales de ISR en `constants.ts` (manteniendo las bases de 2025 conforme a la normativa vigente).
-- **Valores UMA 2026:** Se actualizó el valor de la UMA a un estimado de **$117.67 diarios** y **$3,577.17 mensuales**.
-- **Título del Sitio:** Se actualizó el título y las descripciones en `index.html` y `App.tsx` para reflejar el año 2026.
+## 1. Mejora en Comparativa de Ofertas
+- **Beneficios Anuales:** La tabla comparativa ahora incluye automáticamente el **Aguinaldo (Neto)** y la **Prima Vacacional (Neto)** para cada oferta guardada.
+- **Total Anual (Neto + Ahorros):** Se añadió una fila de cálculo total anual que suma los 12 meses de sueldo neto, aguinaldo, prima vacacional y los ahorros acumulados (Fondo y Caja).
+- **Periodicidad:** Se muestra la periodicidad de cada oferta en la cabecera de la tabla para evitar confusiones.
 
-## 2. Nueva Funcionalidad: Comparativa de Ofertas
-- **Módulo de Comparación:** Se implementó un sistema que permite al usuario "guardar" el cálculo actual para compararlo con otras ofertas laborales.
-- **Tabla Comparativa:** Se añadió una sección dinámica que muestra las diferencias en Sueldo Bruto, ISR, Otras Deducciones y Sueldo Neto entre las distintas opciones guardadas.
+## 2. Fondo de Ahorro: Aportación Patronal
+- **Opción "Patrón duplica (1:1)":** Se añadió un checkbox para activar la aportación patronal en el fondo de ahorro.
+- **Visualización de Beneficio:** El monto aportado por el patrón se muestra en el desglose de resultados como un ingreso adicional de ahorro, diferenciándolo de la retención al empleado.
+- **Impacto Anual:** Las aportaciones patronales se suman al "Total Anual" en la comparativa de ofertas.
 
-## 3. Mejora en Deducciones: Multi-Deducción
-- **Otras Deducciones Dinámicas:** Se eliminó el campo único de "Otras Deducciones" y se reemplazó por un sistema de lista.
-- **Gestión de Lista:** Ahora el usuario puede añadir múltiples deducciones personalizadas (ej. Seguro, Préstamo, Infonavit) con etiquetas individuales y montos específicos.
-- **Interfaz Mejorada:** Se integró un estilo "minimal" en `CurrencyInput` para una mejor visualización de la lista de deducciones.
-
-## 4. Sincronización Móvil (Android)
-- **Build y Sync:** Se generó la nueva versión de producción (`npm run build`) y se sincronizó con el proyecto de Capacitor en `Version_APK` (`npx cap sync android`), permitiendo que todos los cambios (2026, comparativa y multi-deducciones) estén disponibles inmediatamente en la aplicación Android.
-
-## 5. Corrección de Errores (Hotfix)
-- **Fix Pantalla en Blanco:** Se corrigió un error crítico en `DonutChart.tsx` donde la aplicación se bloqueaba al intentar desestructurar `viewBox` cuando era indefinido. Se añadió una validación de nulidad.
-- **Sincronización de Datos en Gráfico:** Se actualizó la lógica del gráfico para que reconozca el nuevo campo `otherDeductionsTotal` (Multi-deducción), evitando fallos visuales.
-- **Notas de Consola:** Se identificaron advertencias de AdSense/Analytics (bloqueados por navegador) y Tailwind CDN (uso recomendado de PostCSS en producción) que no afectan la funcionalidad básica pero se consideran para futuras optimizaciones.
+## 3. Despliegue y Sincronización
+- **Actualización Web:** Se realizó el commit de los cambios y se desplegó la nueva versión a **GitHub Pages** exitosamente.
+- **Sincronización Android:** Se sincronizaron los activos web con el proyecto Capacitor en `Version_APK` (`npx cap sync android`).
 
 ## Próximos Pasos (Pendientes)
-- **Subida a la Web:** Desplegar la nueva versión de producción en el hosting web (GitHub Pages o similar).
 - **Compilación de App:** Abrir el proyecto en Android Studio para generar el nuevo archivo APK/AAB firmado y subirlo a la Google Play Console.
