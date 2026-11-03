@@ -30,7 +30,7 @@ export const ContactInfo: React.FC = () => {
             className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all font-medium text-slate-700 w-fit"
           >
             <Mail className="w-4 h-4 text-blue-600" />
-            calculadoradesalarioneto@gmail.com
+            javier.rodriguez.corona60@gmail.com
           </a>
         </div>
       </div>
